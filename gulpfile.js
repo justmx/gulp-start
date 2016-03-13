@@ -7,6 +7,8 @@ var browserify = require('browserify'); //Bundle JS
 var reactify = require('reactify'); //Transforms React JSX to JS
 var source = require('vinyl-source-stream'); //Use conventional text streams with Gulp
 var concat = require('gulp-concat'); //Concatenates files
+var changed = require('gulp-changed');
+var imagemin = require('gulp-imagemin');
 var eslint = require('gulp-eslint'); // Lint JS files, including JSX
 
 // Start a local development server
@@ -22,7 +24,8 @@ var config = {
 			'node_modules/bootstrap/dist/css/bootstrap-theme.min.css'
 		],
 		dist: './dist',
-		mainJs: './src/main.js'
+		mainJs: './src/main.js',
+		images: './src/images/**/*'
 	}
 
 }
@@ -37,7 +40,7 @@ gulp.task('connect', function() {
 });
 
 gulp.task('open', ['connect'], function() {
-	gulp.src('dist/index.html')
+	gulp.src('./dist/index.html')
 		.pipe(open({
 			uri: config.devBaseUrl + ':' + config.port + '/'
 		}));
@@ -65,8 +68,20 @@ gulp.task('css', function() {
 		.pipe(gulp.dest(config.paths.dist + '/css'));
 });
 
+gulp.task('image', function() {
+	var imgDst = config.paths.dist + '/images';
+	gulp.src(config.paths.images)
+		.pipe(changed(imgDst))
+		.pipe(imagemin())
+		.pipe(gulp.dest(imgDst))
+		.pipe(connect.reload());
+});
+
+
+
 gulp.task('watch', function() {
 	gulp.watch(config.paths.html, ['html']);
+	gulp.watch(config.paths.images, ['image']);
 	gulp.watch(config.paths.js, ['js', 'lint']);
 });
 
@@ -78,7 +93,7 @@ gulp.task('lint', function() {
 		.pipe(eslint.format());
 });
 
-gulp.task('default', ['html', 'js', 'css', 'lint', 'open', 'watch']);
+gulp.task('default', ['html','image', 'js', 'css', 'lint', 'open', 'watch']);
 
 
 
